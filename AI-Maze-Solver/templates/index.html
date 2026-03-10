@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>AI Maze Solver</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<h1>AI Based Maze Solver</h1>
+
+<form action="/solve" method="post">
+
+<h3>Enter Maze Grid</h3>
+
+<p>Use 0 for path and 1 for wall</p>
+
+<textarea name="maze" rows="6" cols="30">
+
+0 0 1 0
+1 0 1 0
+0 0 0 0
+0 1 1 0
+
+</textarea>
+
+<br><br>
+
+<button type="submit">Solve Maze</button>
+
+</form>
+
+{% if bfs %}
+
+<h2>Results</h2>
+
+<h3>BFS</h3>
+<p>Path : {{ bfs.path }}</p>
+<p>Nodes Explored : {{ bfs.nodes }}</p>
+<p>Execution Time : {{ "%.6f"|format(bfs.time) }} sec</p>
+
+<h3>DFS</h3>
+<p>Path : {{ dfs.path }}</p>
+<p>Nodes Explored : {{ dfs.nodes }}</p>
+<p>Execution Time : {{ "%.6f"|format(dfs.time) }} sec</p>
+
+<h3>A*</h3>
+<p>Path : {{ astar.path }}</p>
+<p>Nodes Explored : {{ astar.nodes }}</p>
+<p>Execution Time : {{ "%.6f"|format(astar.time) }} sec</p>
+
+<h3>Greedy</h3>
+<p>Path : {{ greedy.path }}</p>
+<p>Nodes Explored : {{ greedy.nodes }}</p>
+<p>Execution Time : {{ "%.6f"|format(greedy.time) }} sec</p>
+
+{% endif %}
+
+</body>
+
+</html>
