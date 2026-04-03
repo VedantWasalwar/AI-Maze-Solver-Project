@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Maze Solver Pro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- External libraries via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ── Tooltip ── -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ══════════════════════════════════
+     HEADER
+══════════════════════════════════ -->
+<header class="app-header">
+  <div class="header-left">
+    <div class="logo-mark">⬡</div>
+    <div>
+      <div class="app-title">AI Maze Solver Pro</div>
+      <div class="app-subtitle">graph · search · visualisation</div>
+    </div>
+    <div class="badges" style="display:flex;gap:5px;margin-left:8px">
+      <span class="algo-badge badge-bfs">BFS</span>
+      <span class="algo-badge badge-dfs">DFS</span>
+      <span class="algo-badge badge-astar">A*</span>
+      <span class="algo-badge badge-greedy">GREEDY</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">☾</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+     APP BODY — 3-column grid
+══════════════════════════════════ -->
+<div class="app-body">
+
+  <!-- ════════════════
+       LEFT PANEL
+  ════════════════ -->
+  <aside class="panel-left">
+
+    <!-- Maze Input -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Maze Input</div>
+      <label>Paste grid text (0 = path, 1 = wall)</label>
+      <textarea id="mazeTextInput" rows="5" placeholder="0 0 1 0&#10;1 0 1 0&#10;0 0 0 0&#10;0 1 1 0"></textarea>
+      <div style="margin-top:10px">
+        <label style="margin-bottom:6px">Presets</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+          <button class="btn" data-preset="s4">Simple 4×4</button>
+          <button class="btn" data-preset="m6">Medium 6×6</button>
+          <button class="btn" data-preset="h8">Hard 8×8</button>
+          <button class="btn" data-preset="open">Open 6×6</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid Size -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Grid Size</div>
+      <div class="maze-size-row">
+        <label>Rows</label>
+        <input type="number" id="rowsInput" value="6" min="2" max="20">
+        <label style="margin-left:4px">Cols</label>
+        <input type="number" id="colsInput" value="6" min="2" max="20">
+        <button class="btn" id="applySize" style="white-space:nowrap;margin-left:4px">Apply</button>
+      </div>
+    </div>
+
+    <!-- Drawing Tools -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Drawing Tools</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+        <button class="tool-btn active" id="modeWall">🧱 Wall</button>
+        <button class="tool-btn" id="modeErase">🩹 Erase</button>
+        <button class="tool-btn" id="modeStart">🟢 Set Start</button>
+        <button class="tool-btn" id="modeEnd">🔴 Set End</button>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:5px">
+        <button class="btn btn-success" id="btnRandom" style="flex:1">⚙ Random</button>
+        <button class="btn btn-danger"  id="btnReset"  style="flex:1">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- Algorithm Selection -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Algorithms</div>
+      <div class="algo-toggles">
+        <button class="algo-toggle" data-algo="bfs">BFS</button>
+        <button class="algo-toggle" data-algo="dfs">DFS</button>
+        <button class="algo-toggle" data-algo="astar">A*</button>
+        <button class="algo-toggle" data-algo="greedy">Greedy</button>
+      </div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
+        <button class="btn" data-run="bfs"    style="font-size:11px;color:var(--algo-bfs)">▶ BFS</button>
+        <button class="btn" data-run="dfs"    style="font-size:11px;color:var(--algo-dfs)">▶ DFS</button>
+        <button class="btn" data-run="astar"  style="font-size:11px;color:var(--algo-astar)">▶ A*</button>
+        <button class="btn" data-run="greedy" style="font-size:11px;color:var(--algo-greedy)">▶ Greedy</button>
+      </div>
+    </div>
+
+    <!-- Speed -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Animation Speed</div>
+      <div class="speed-row">
+        <span class="speed-lbl">Slow</span>
+        <input type="range" id="speedSlider" min="1" max="10" value="5">
+        <span class="speed-lbl">Fast</span>
+        <span class="speed-lbl" style="min-width:18px;text-align:right" id="speedVal">5</span>
+      </div>
+    </div>
+
+    <!-- Solve All -->
+    <button class="btn btn-primary btn-full" id="btnSolveAll">▶ Solve All</button>
+
+  </aside>
+
+  <!-- ════════════════
+       MAIN PANEL
+  ════════════════ -->
+  <main class="panel-main">
+
+    <!-- Maze Visualiser -->
+    <div class="card maze-section">
+      <div class="card-title" style="margin-bottom:8px"><span class="dot"></span> Interactive Maze</div>
+      <div class="legend" style="margin-bottom:10px">
+        <span class="leg"><span class="leg-dot" style="background:#1e2538;border:1px solid #4f8ef7"></span>Start (S)</span>
+        <span class="leg"><span class="leg-dot" style="background:#1e2538;border:1px solid #3ddba0"></span>End (E)</span>
+        <span class="leg"><span class="leg-dot" style="background:#2e3a58"></span>Wall</span>
+        <span class="leg"><span class="leg-dot" style="background:#0a0d16;border:1px solid #1e2538"></span>Open</span>
+        <span class="leg"><span class="leg-dot" style="background:rgba(79,142,247,0.4)"></span>Explored</span>
+        <span class="leg"><span class="leg-dot" style="background:rgba(61,219,160,0.5)"></span>Path</span>
+      </div>
+      <div class="maze-container" id="mazeContainer">
+        <canvas id="mazeCanvas"></canvas>
+      </div>
+      <div class="status-bar">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText" style="font-size:12px">Click cells to toggle walls · Click Start/End mode to reposition them</span>
+      </div>
+    </div>
+
+    <!-- Stats cards (shown after solve) -->
+    <div class="stats-grid" id="statsRow" style="display:none">
+      <div class="stat-card"><div class="stat-val" id="sPath"   style="color:var(--algo-bfs)">—</div><div class="stat-lbl">Path Length</div></div>
+      <div class="stat-card"><div class="stat-val" id="sNodes"  style="color:var(--algo-greedy)">—</div><div class="stat-lbl">Nodes Explored</div></div>
+      <div class="stat-card"><div class="stat-val" id="sTime"   style="color:var(--algo-astar)">—</div><div class="stat-lbl">Time (ms)</div></div>
+      <div class="stat-card"><div class="stat-val" id="sMemory" style="color:var(--algo-dfs)">—</div><div class="stat-lbl">Memory</div></div>
+    </div>
+
+    <!-- Comparison Charts -->
+    <div style="display:none;grid-template-columns:1fr 1fr;gap:12px" id="chartsRow">
+      <div class="card chart-wrap">
+        <div class="card-title"><span class="dot"></span> Nodes Explored</div>
+        <div class="chart-canvas-wrap"><canvas id="chartNodes"></canvas></div>
+      </div>
+      <div class="card chart-wrap">
+        <div class="card-title"><span class="dot"></span> Execution Time (ms)</div>
+        <div class="chart-canvas-wrap"><canvas id="chartTime"></canvas></div>
+      </div>
+      <div class="card chart-wrap">
+        <div class="card-title"><span class="dot"></span> Path Length</div>
+        <div class="chart-canvas-wrap"><canvas id="chartPath"></canvas></div>
+      </div>
+      <div class="card chart-wrap">
+        <div class="card-title"><span class="dot"></span> Memory Usage (KB)</div>
+        <div class="chart-canvas-wrap"><canvas id="chartMemory"></canvas></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ════════════════
+       RIGHT PANEL
+  ════════════════ -->
+  <aside class="panel-right">
+
+    <!-- Per-algorithm results -->
+    <div class="card" id="resultsCard" style="display:none">
+      <div class="card-title"><span class="dot"></span> Results</div>
+      <div class="result-tabs" id="resultTabs"></div>
+      <div id="resultDetails"></div>
+      <div style="margin-top:10px">
+        <label style="margin-bottom:5px">Path coordinates</label>
+        <div class="path-display" id="pathDisplay">—</div>
+      </div>
+    </div>
+
+    <!-- D3 Graph -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Graph View</div>
+      <svg id="graphSvg"></svg>
+      <div class="graph-hint">Click a node to highlight its maze cell</div>
+    </div>
+
+    <!-- Search Tree -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Search Tree</div>
+      <svg id="treeSvg"></svg>
+    </div>
+
+    <!-- Queue / Stack Visualiser -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Queue / Stack</div>
+      <div class="queue-vis" id="queueVis">
+        <span style="color:var(--text-dim);font-size:11px">Run an algorithm to see queue/stack state</span>
+      </div>
+    </div>
+
+    <!-- Algorithm Info -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> Algorithm Guide</div>
+      <div style="font-size:11px;color:var(--text-muted);line-height:1.7">
+        <p style="margin-bottom:6px"><span style="color:var(--algo-bfs);font-family:var(--mono);font-weight:700">BFS</span> — Breadth-first. Guaranteed shortest path. Uses a queue.</p>
+        <p style="margin-bottom:6px"><span style="color:var(--algo-dfs);font-family:var(--mono);font-weight:700">DFS</span> — Depth-first. Fast but not optimal. Uses a stack.</p>
+        <p style="margin-bottom:6px"><span style="color:var(--algo-astar);font-family:var(--mono);font-weight:700">A*</span>   — Optimal + informed. Uses f(n)=g(n)+h(n).</p>
+        <p><span style="color:var(--algo-greedy);font-family:var(--mono);font-weight:700">GREEDY</span> — Heuristic only. Fast, not guaranteed optimal.</p>
+      </div>
+    </div>
+
+  </aside>
+
+</div><!-- /app-body -->
+
+<!-- JS Modules (order matters) -->
+<script src="{{ url_for('static', filename='js/maze.js') }}"></script>
+<script src="{{ url_for('static', filename='js/graph.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>
